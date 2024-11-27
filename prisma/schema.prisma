@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum VideoStatus {
+  PROCESSING
+  TRANSCODED
+}
+
+enum VideoCategory {
+  EDUCATION
+  ENTERTAINMENT
+  GAMING
+  MUSIC
+  SPORTS
+  TECHNOLOGY
+  OTHER
+}
+
+model User {
+  id               String           @id @default(uuid())
+  email            String           @unique
+  username         String           @unique
+  password         String
+  createdAt        DateTime         @default(now())
+  channel          Channel?
+  videos           Video[]
+  videoTimeUpdates VideoTimeUpdate[]
+}
+
+model Channel {
+  id              String   @id @default(uuid())
+  name            String
+  description     String?
+  slug            String   @unique
+  createdAt       DateTime @default(now())
+  thumbnail_url   String?
+  user            User     @relation(fields: [userId], references: [id])
+  userId          String   @unique
+  videos          Video[]
+  subscribersCount Int     @default(0)
+}
+model Video {
+  id              String         @id @default(uuid())
+  title           String
+  description     String?
+  category        VideoCategory?
+  status          VideoStatus    @default(PROCESSING)
+  viewCount       Int            @default(0)
+  createdAt       DateTime       @default(now())
+  thumbnail_url   String?        // Optional URL for the video's thumbnail image
+  creator         User           @relation(fields: [creatorId], references: [id])
+  creatorId       String
+  channel         Channel        @relation(fields: [channelId], references: [id])
+  channelId       String
+  videoUrls       VideoUrl[]
+  timeUpdates     VideoTimeUpdate[]
+  currentTimestamp Float        @default(0)
+}
+
+model VideoUrl {
+  id        String @id @default(uuid())
+  quality   String
+  url       String
+  video     Video  @relation(fields: [videoId], references: [id])
+  videoId   String
+}
+
+model VideoTimeUpdate {
+  id        String   @id @default(uuid())
+  timestamp Float
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  video     Video    @relation(fields: [videoId], references: [id])
+  videoId   String
+}
