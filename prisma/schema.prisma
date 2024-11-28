@@ -29,7 +29,7 @@ model User {
   password         String
   createdAt        DateTime         @default(now())
   channel          Channel?
-  videos           Video[]
+  videos           Video[]          @relation("UserVideos")
   videoTimeUpdates VideoTimeUpdate[]
 }
 
@@ -39,28 +39,29 @@ model Channel {
   description     String?
   slug            String   @unique
   createdAt       DateTime @default(now())
-  thumbnail_url   String?
+  thumbnailUrl    String?  // CamelCase for consistency
   user            User     @relation(fields: [userId], references: [id])
   userId          String   @unique
-  videos          Video[]
+  videos          Video[]  @relation("ChannelVideos")
   subscribersCount Int     @default(0)
 }
+
 model Video {
-  id              String         @id @default(uuid())
+  id              String           @id @default(uuid())
   title           String
   description     String?
   category        VideoCategory?
-  status          VideoStatus    @default(PROCESSING)
-  viewCount       Int            @default(0)
-  createdAt       DateTime       @default(now())
-  thumbnail_url   String?        // Optional URL for the video's thumbnail image
-  creator         User           @relation(fields: [creatorId], references: [id])
+  status          VideoStatus      @default(PROCESSING)
+  viewCount       Int              @default(0)
+  createdAt       DateTime         @default(now())
+  thumbnailUrl    String?          // CamelCase for consistency
+  creator         User             @relation("UserVideos", fields: [creatorId], references: [id])
   creatorId       String
-  channel         Channel        @relation(fields: [channelId], references: [id])
+  channel         Channel          @relation("ChannelVideos", fields: [channelId], references: [id])
   channelId       String
   videoUrls       VideoUrl[]
   timeUpdates     VideoTimeUpdate[]
-  currentTimestamp Float        @default(0)
+  currentTimestamp Float           @default(0)
 }
 
 model VideoUrl {
