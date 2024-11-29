@@ -70,7 +70,7 @@ export const createChanel = async (req: Request, res: Response) => {
     }
 }
 
-export const getChannelDetail = async (req: Request, res: Response) => {
+export const getChannelDetail = async (req: Request, res: Response):Promise<any>=> {
     try {
         const { slug } = req.params
         const token = req.cookies.Authentication || req.headers.authorization?.split("")[1];
@@ -92,7 +92,7 @@ export const getChannelDetail = async (req: Request, res: Response) => {
                     select: {
                         id: true,
                         title: true,
-                        thumbnail_url: true 
+                        thumbnailUrl: true 
                     }
                 }
             }
@@ -111,7 +111,7 @@ export const getChannelDetail = async (req: Request, res: Response) => {
             videos: channel?.videos?.map(video => ({
                 id: video.id,
                 title: video.title,
-                thumbnail_url: video.thumbnail_url
+                thumbnail_url: video.thumbnailUrl
             })) 
         }
 

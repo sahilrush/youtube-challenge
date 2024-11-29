@@ -61,13 +61,12 @@ export const VideoInputSchema = z.object({
     category: z.string(),
   });
 
-export const UploadVideoSchema = z.object({
+  export const UploadVideoSchema = z.object({
     id: z.string(),
     title: z.string(),
-    processing_status: z.string(),
-    qualities: z.array(z.enum(["240p", "480p", "720p"])), // Qualities should be an array of enums
-  });
-  
+    processing_status: z.enum(["PROCESSING", "TRANSCODED"]), // Enum for predefined statuses
+    qualities: z.array(z.enum(["240p", "480p", "720p"])),   // Array of enums for qualities
+});
 
   export const GetVideoDetailSchema = z.object({
     id: z.string(),

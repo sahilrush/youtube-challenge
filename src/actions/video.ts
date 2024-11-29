@@ -139,7 +139,7 @@ export const uploadVideo = [upload.single("file"), async (req: Request, res: Res
 }]
 
 
-export const getVideoDetails = async (req: Request, res: Response) => {
+export const getVideoDetails = async (req: Request, res: Response): Promise<any> => {
     try {
 
         const { video_id } = req.params;
@@ -179,9 +179,9 @@ export const getVideoDetails = async (req: Request, res: Response) => {
 
 
 
-const updateTimeStamp = async (res: Response, req: Request) => {
-
+export const updateTimeStamp = async (res: Response, req: Request):Promise<any> => {
     try {
+
         const token = req.cookies.Authentication || req.headers.authorization?.split("")[1];
         if (!token) {
             res.status(401).json({ message: "Unauthorized" })
@@ -189,31 +189,62 @@ const updateTimeStamp = async (res: Response, req: Request) => {
         }
 
         let userId: string;
-        try{
-            const decoded = jwt.verify(token,JWT_PASSWORD);
-            userId = (decoded as {id: string}).id;
-        }catch(e) {
-         res.status(401).json({message:"Invalid or expired token"})
-         return
+        try {
+            const decoded = jwt.verify(token, JWT_PASSWORD);
+            userId = (decoded as { id: string }).id;
+        } catch (e) {
+            res.status(401).json({ message: "Invalid or expired token" })
+            return
         }
 
 
         const validationResult = UpdateTimestampSchema.safeParse(req.body)
-        if(!validationResult.success) {
-            res.status(400).json({message:"TimeStamp must be valid, non negative number"})
+        if (!validationResult.success) {
+            res.status(400).json({ message: "TimeStamp must be valid, non negative number" })
+            return
         }
 
-        // const {video_id, timestamp}= validationResult.data      
-        https://chatgpt.com/share/6747f63a-d0ec-8001-bdad-b99822f933df 
 
-        
+        const { video_id, timestamp } = validationResult.data
+        const parsedTimestamp = parseFloat(timestamp);
+        if (isNaN(parsedTimestamp) || parsedTimestamp < 0) {
+            res.status(400).json({ message: "Timestamo must be a valid number" })
+        }
+
+
+        const video = await prisma.video.findUnique({
+            where: { id: video_id }
+        });
+        if (!video) {
+            return res.status(404).json({ message: "Video not found" });
+        }
+
+        if (parsedTimestamp > video.currentTimestamp) {
+            return res.status(400).json({ message: "Timestamp exceeds video length" });
+        }
 
 
 
-    }catch(e) {
+        await prisma.videoTimeUpdate.create({
+            data: {
+                userId: userId,
+                videoId: video_id,
+                timestamp: parsedTimestamp
+            }
+        })
+
+
+        return res.status(201).json({ message: "Timestamp updated successfully" });
+
+
+
+
+
+    } catch (e) {
+        return res.status(500).json({ message: "Internal server error" });
 
     }
 
-    
+
 }
-UpdateTimestampSchema
+

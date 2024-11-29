@@ -93,6 +93,7 @@ const signin = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 email: user.email
             }
         });
+        console.log(res);
     }
     catch (e) {
         res.status(400).json({ message: "Internal server error" });
