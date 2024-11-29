@@ -4,7 +4,6 @@ import { Request, Response } from "express"
 import { JWT_PASSWORD } from "../config.js"
 import jwt from "jsonwebtoken"
 import { PrismaClient } from "@prisma/client"
-import { any } from "zod"
 
 const prisma = new PrismaClient()
 
@@ -92,7 +91,7 @@ export const getChannelDetail = async (req: Request, res: Response):Promise<any>
                     select: {
                         id: true,
                         title: true,
-                        thumbnailUrl: true 
+                        thumbnail_url: true 
                     }
                 }
             }
@@ -107,11 +106,11 @@ export const getChannelDetail = async (req: Request, res: Response):Promise<any>
             id: channel?.id,
             name: channel?.name,
             description: channel?.description || null,
-            subscriber_count: channel?.subscribersCount,
+            subscriber_count: channel?.subscriber_count,
             videos: channel?.videos?.map(video => ({
                 id: video.id,
                 title: video.title,
-                thumbnail_url: video.thumbnailUrl
+                thumbnail_url: video.thumbnail_url
             })) 
         }
 

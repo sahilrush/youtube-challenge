@@ -14,24 +14,24 @@ export const SignInSchema = zod.object({
 })
 
 
-export const VideoFeedSchema = z.object({
-    videos: z.array(
-        z.object({
-            id: z.string().uuid(),
-            title: z.string(),
-            thumbnail_url: z.string().url(),
-            creator: z.object({
-                id: z.string().uuid(),
-                username: z.string(),
-            }),
-            view_count: z.number().int(),
-            created_at: z.string().refine((val) => !isNaN(Date.parse(val)), {
-                message: 'Invalid date format',
-            }),
-        })
-    ),
-    total_pages: z.number().int(),
-    current_page: z.number().int(),
+export const VideoFeedQuerySchema = z.object({
+  videos: z.array(
+    z.object({
+      id: z.string().uuid(),
+      title: z.string(),
+      thumbnail_url: z.string().nullable(),
+      creator: z.object({
+        id: z.string().uuid(),
+        username: z.string(),
+      }),
+      view_count: z.number().int().nonnegative(),
+      created_at: z.string().refine((val) => !isNaN(Date.parse(val)), {
+        message: "Invalid date format",
+      }),
+    })
+  ),
+  total_pages: z.number().int().nonnegative(),
+  current_page: z.number().int().nonnegative(),
 });
 
 

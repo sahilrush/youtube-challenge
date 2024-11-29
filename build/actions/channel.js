@@ -89,7 +89,7 @@ const getChannelDetail = (req, res) => __awaiter(void 0, void 0, void 0, functio
                     select: {
                         id: true,
                         title: true,
-                        thumbnailUrl: true
+                        thumbnail_url: true
                     }
                 }
             }
@@ -102,11 +102,11 @@ const getChannelDetail = (req, res) => __awaiter(void 0, void 0, void 0, functio
             id: channel === null || channel === void 0 ? void 0 : channel.id,
             name: channel === null || channel === void 0 ? void 0 : channel.name,
             description: (channel === null || channel === void 0 ? void 0 : channel.description) || null,
-            subscriber_count: channel === null || channel === void 0 ? void 0 : channel.subscribersCount,
+            subscriber_count: channel === null || channel === void 0 ? void 0 : channel.subscriber_count,
             videos: (_c = channel === null || channel === void 0 ? void 0 : channel.videos) === null || _c === void 0 ? void 0 : _c.map(video => ({
                 id: video.id,
                 title: video.title,
-                thumbnail_url: video.thumbnailUrl
+                thumbnail_url: video.thumbnail_url
             }))
         };
         const validation = types_ts_1.GetChannelSchema.safeParse(ResponseData);

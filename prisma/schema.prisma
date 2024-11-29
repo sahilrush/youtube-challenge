@@ -7,77 +7,69 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum VideoStatus {
-  PROCESSING
-  TRANSCODED
-}
-
-enum VideoCategory {
-  EDUCATION
-  ENTERTAINMENT
-  GAMING
-  MUSIC
-  SPORTS
-  TECHNOLOGY
-  OTHER
-}
-
 model User {
-  id               String           @id @default(uuid())
-  email            String           @unique
-  username         String           @unique
-  password         String
-  createdAt        DateTime         @default(now())
-  channel          Channel?
-  videos           Video[]          @relation("UserVideos")
-  videoTimeUpdates VideoTimeUpdate[]
+  id        String    @id @default(uuid())
+  username  String    @unique
+  email     String    @unique
+  password  String
+  createdAt DateTime @default(now())
+  channel   Channel?
+  videos    Video[]
+  watchHistory    WatchHistory[]
 }
+
 
 model Channel {
   id              String   @id @default(uuid())
   name            String
   description     String?
   slug            String   @unique
-  createdAt       DateTime @default(now())
-  thumbnailUrl    String?  // CamelCase for consistency
   user            User     @relation(fields: [userId], references: [id])
   userId          String   @unique
-  videos          Video[]  @relation("ChannelVideos")
-  subscribersCount Int     @default(0)
+  subscriber_count Int      @default(0)
+  createdAt       DateTime @default(now())
+  videos          Video[]
 }
 
 model Video {
-  id              String           @id @default(uuid())
+  id              String         @id @default(uuid())
   title           String
   description     String?
-  category        VideoCategory?
-  status          VideoStatus      @default(PROCESSING)
-  viewCount       Int              @default(0)
-  createdAt       DateTime         @default(now())
-  thumbnailUrl    String?          // CamelCase for consistency
-  creator         User             @relation("UserVideos", fields: [creatorId], references: [id])
+  status          VideoStatus    @default(PROCESSING)
+  category        VideoCategory  @default(GAMING)
+  creator         User           @relation(fields: [creatorId], references: [id])
   creatorId       String
-  channel         Channel          @relation("ChannelVideos", fields: [channelId], references: [id])
+  channel         Channel        @relation(fields: [channelId], references: [id])
   channelId       String
-  videoUrls       VideoUrl[]
-  timeUpdates     VideoTimeUpdate[]
-  currentTimestamp Float           @default(0)
+  thumbnail_url    String?
+  videoUrls       Json?
+  view_count       Int            @default(0)
+  createdAt       DateTime       @default(now())
+  watchHistory    WatchHistory[]
 }
 
-model VideoUrl {
-  id        String @id @default(uuid())
-  quality   String
-  url       String
-  video     Video  @relation(fields: [videoId], references: [id])
-  videoId   String
+model WatchHistory {
+  id         String   @id @default(uuid())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  video      Video    @relation(fields: [videoId], references: [id])
+  videoId    String
+  timestamp  Float    @default(0)
+  watchedAt  DateTime @default(now())
+
+  @@unique([userId, videoId])
+  
+
 }
 
-model VideoTimeUpdate {
-  id        String   @id @default(uuid())
-  timestamp Float
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id])
-  userId    String
-  video     Video    @relation(fields: [videoId], references: [id])
-  videoId   String
+enum VideoStatus {
+  PROCESSING
+  TRANSCODED
+  FAILED
+}
+
+enum VideoCategory {
+  GAMING
+  EDUCATION
+  TECHNOLOGY
 }

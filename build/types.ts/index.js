@@ -23,7 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UpdateTimestampSchema = exports.GetVideoDetailSchema = exports.UploadVideoSchema = exports.VideoInputSchema = exports.GetChannelSchema = exports.ChannelSchema = exports.VideoFeedSchema = exports.SignInSchema = exports.SignUpSchema = void 0;
+exports.UpdateTimestampSchema = exports.GetVideoDetailSchema = exports.UploadVideoSchema = exports.VideoInputSchema = exports.GetChannelSchema = exports.ChannelSchema = exports.VideoFeedQuerySchema = exports.SignInSchema = exports.SignUpSchema = void 0;
 const zod_1 = __importStar(require("zod"));
 exports.SignUpSchema = zod_1.default.object({
     email: zod_1.z.string(),
@@ -34,22 +34,22 @@ exports.SignInSchema = zod_1.default.object({
     email: zod_1.z.string(),
     password: zod_1.z.string()
 });
-exports.VideoFeedSchema = zod_1.z.object({
+exports.VideoFeedQuerySchema = zod_1.z.object({
     videos: zod_1.z.array(zod_1.z.object({
         id: zod_1.z.string().uuid(),
         title: zod_1.z.string(),
-        thumbnail_url: zod_1.z.string().url(),
+        thumbnail_url: zod_1.z.string().nullable(),
         creator: zod_1.z.object({
             id: zod_1.z.string().uuid(),
             username: zod_1.z.string(),
         }),
-        view_count: zod_1.z.number().int(),
+        view_count: zod_1.z.number().int().nonnegative(),
         created_at: zod_1.z.string().refine((val) => !isNaN(Date.parse(val)), {
-            message: 'Invalid date format',
+            message: "Invalid date format",
         }),
     })),
-    total_pages: zod_1.z.number().int(),
-    current_page: zod_1.z.number().int(),
+    total_pages: zod_1.z.number().int().nonnegative(),
+    current_page: zod_1.z.number().int().nonnegative(),
 });
 exports.ChannelSchema = zod_1.default.object({
     name: zod_1.z.string(),

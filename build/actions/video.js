@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateTimeStamp = exports.getVideoDetails = exports.uploadVideo = exports.getVideoFeed = void 0;
+exports.updateTimeStamp = exports.getVideoDetails = exports.uploadVideo = exports.videoFeed = void 0;
 const types_ts_1 = require("../types.ts");
 const client_1 = require("@prisma/client");
 const multer_1 = __importDefault(require("multer"));
@@ -20,23 +20,6 @@ const uuid_1 = require("uuid");
 const config_js_1 = require("../config.js");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const prisma = new client_1.PrismaClient();
-const getVideoFeed = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const { page = 1, limit = 20, category } = req.query;
-        const parsedData = types_ts_1.VideoFeedSchema.safeParse({
-            page: Number(page),
-            limit: Number(limit),
-            category: category ? String(category) : undefined
-        });
-        if (!parsedData.success) {
-            res.status(400).json({ message: "Invalid queary paramter" });
-        }
-        let videosQuery = prisma.video.findMany({});
-    }
-    catch (e) {
-    }
-});
-exports.getVideoFeed = getVideoFeed;
 const storage = multer_1.default.diskStorage({
     destination: (req, file, cb) => {
         cb(null, "./uploads/videos");
@@ -46,6 +29,59 @@ const storage = multer_1.default.diskStorage({
     }
 });
 const upload = (0, multer_1.default)({ storage });
+const videoFeed = (res, req) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { page = 1, limit = 20, category } = req.query;
+        const currentPage = Math.max(Number(page) || 1, 1);
+        const itemsPerPage = Math.max(Number(limit) || 20, 1);
+        const whereFilter = category ? { category: category.toString().toUpperCase() } : undefined;
+        const videos = yield prisma.video.findMany({
+            where: whereFilter,
+            skip: (currentPage - 1) * itemsPerPage,
+            take: itemsPerPage,
+            select: {
+                id: true,
+                title: true,
+                thumbnail_url: true,
+                creator: {
+                    select: {
+                        id: true,
+                        username: true
+                    }
+                },
+                view_count: true,
+                createdAt: true
+            }
+        });
+        const totalVideo = yield prisma.video.count({ where: whereFilter });
+        const totalPages = Math.ceil(totalVideo / itemsPerPage);
+        const response = {
+            videos: videos.map((video) => ({
+                id: video.id,
+                title: video.title,
+                thumbnail_url: video.thumbnail_url,
+                creator: {
+                    id: video.creator.id,
+                    username: video.creator.username,
+                },
+                view_count: video.view_count,
+                createdAt: video.createdAt.toISOString(),
+            })),
+            total_pages: totalPages,
+            current_page: currentPage,
+        };
+        const validation = types_ts_1.VideoFeedQuerySchema.safeParse(response);
+        if (!validation.success) {
+            res.status(500).json({ message: "invalid parameters" });
+            return;
+        }
+        res.status(200).json(response);
+    }
+    catch (error) {
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+exports.videoFeed = videoFeed;
 exports.uploadVideo = [upload.single("file"), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         var _a;
         try {
@@ -87,17 +123,18 @@ exports.uploadVideo = [upload.single("file"), (req, res) => __awaiter(void 0, vo
                 },
             });
             const qualities = ["240p", "480p", "720p"];
-            yield Promise.all(qualities.map((quality) => {
-                var _a;
-                prisma.videoUrl.create({
-                    data: {
-                        id: (0, uuid_1.v4)(),
-                        quality,
-                        url: `/uploads/videos/${(_a = req.file) === null || _a === void 0 ? void 0 : _a.fieldname}`,
-                        videoId: video.id
-                    }
-                });
-            }));
+            // can create a map for quality / will have to update databae(videoUrl)
+            // await Promise.all(
+            //     qualities.map((quality) => {
+            //         prisma.video.create({
+            //             data: {
+            //                 id: uuidv4(),
+            //                 url: `/uploads/videos/${req.file?.fieldname}`,
+            //                 videoId: video.id
+            //             }
+            //         })
+            //     })
+            // )
             const response = {
                 id: video.id,
                 title: video.title,
@@ -182,10 +219,7 @@ const updateTimeStamp = (res, req) => __awaiter(void 0, void 0, void 0, function
         if (!video) {
             return res.status(404).json({ message: "Video not found" });
         }
-        if (parsedTimestamp > video.currentTimestamp) {
-            return res.status(400).json({ message: "Timestamp exceeds video length" });
-        }
-        yield prisma.videoTimeUpdate.create({
+        yield prisma.watchHistory.create({
             data: {
                 userId: userId,
                 videoId: video_id,
